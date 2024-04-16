@@ -22,6 +22,10 @@ void loop() {
     switch (incomingBytes[0]) {
       case 0x04: // CMD_RANDOM = 0x04
         digitalWrite(2, HIGH);
+        Serial.write(incomingBytes[0] + 0x80);
+        for (int i = 1; i < 6; i++) {
+          Serial.write(incomingBytes[i]);
+        }
         break;
       case 0x02: // CMD_ADC = 0x02
         digitalWrite(2, LOW);
