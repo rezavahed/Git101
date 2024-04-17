@@ -8,14 +8,13 @@
 #define CMD_GET_TARGET_TYPE 0x05
 #define CMD_READ_HR         0x12
 #define CMD_WRITE_HR      0X13
+#define CMD_LED_ON      0X24
+#define CMD_LED_OFF      0X23
 const char* FW_VERSION = "1.2.6";
 void setup() {
   // Initialize serial communication at 9600 baud
   Serial.begin(9600);
   pinMode(7, OUTPUT);
-
-
- 
 }
 
 uint16_t getRandomValue() {
@@ -30,7 +29,7 @@ uint32_t getFirmwareVersion() {
     uint8_t patch = FW_VERSION[4] - '0';
 
     // Pack version into 32 bits: major, minor, and patch each in their own byte
-    uint32_t version = ((uint32_t)patch << 24) | ((uint32_t)minor << 16) | ((uint32_t)major << 8);
+    uint32_t version = ((uint32_t)patch << 16) | ((uint32_t)minor << 8) | ((uint32_t)major << 0);
     return version;
 }
 uint8_t calculateCRC(const uint8_t* data, int len) {
@@ -45,9 +44,16 @@ uint8_t calculateCRC(const uint8_t* data, int len) {
     return crc.calc();
 }
 
+uint32_t read_analog (){
+
+    uint32_t sensorValue = analogRead(A5); // Read the analog input
+    return sensorValue;
+
+}
+
 void sendResponse(uint8_t res_id, uint32_t value) {
 
-  uint8_t response_packet[6]; 
+uint8_t response_packet[6]; 
 
   response_packet[0] = res_id;
   response_packet[1] = value & 0xFF;          // Least significant byte
@@ -86,7 +92,7 @@ void loop() {
         
         break;
       case CMD_ADC: // CMD_ADC = 0x02
-        digitalWrite(7, LOW);
+        sendResponse(CMD_ADC + 0x80,read_analog());
         break;
       case 0x15: 
         
@@ -95,11 +101,13 @@ void loop() {
         sendResponse(CMD_RANDOM + 0x80,getRandomValue());
         
         break;
-      case CMD_GET_TARGET_TYPE: // CMD_GET_TARGET_TYPE = 0x05
-        
+      case CMD_LED_ON: // CCMD_LED_ON
+        digitalWrite(7, HIGH);
+        sendResponse(CMD_LED_ON + 0x80,0x01);
         break;
-      case CMD_READ_HR: // CMD_READ_HR = 0x12
-        // Handle case 0x12
+      case CMD_LED_OFF: // CMD_LED_OFF
+        digitalWrite(7, LOW);
+        sendResponse(CMD_LED_OFF + 0x80,0x00);
         break;
       case CMD_WRITE_HR: // CMD_WRITE_HR = 0x13
         
